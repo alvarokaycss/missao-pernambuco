@@ -1,0 +1,207 @@
+:root {
+  --cor-azul: #4751eb;
+  --cor-amarelo: #FFD60A;
+  --cor-verde: #1dc447;
+  --cor-vermelho: #D62828;
+  --cor-branco: #FFFFFF;
+}
+
+#missao-gif {
+  width: 100%;
+  max-width: 1000px;
+  display: block;
+  margin: 0 auto;
+}
+
+#body {
+  transition: background 0.8s ease-in-out;
+}
+
+.vh-75 {
+  height: 75vh;
+}
+
+.bg-main {
+  background-color: var(--cor-azul);
+}
+
+.bg-pe {
+  background: url('../img/bg_pernambuco.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.bg-perdeu-2 {
+  background: url('../img/bg-perdeu-2.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.bg-perdeu-3 {
+  background: url('../img/bg-perdeu-3.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.bg-perdeu-4 {
+  background: url('../img/bg-perdeu-4.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.bg-perdeu-5 {
+  background: url('../img/bg-perdeu-5.png') no-repeat center center fixed;
+  background-size: cover;
+}
+
+.card-pe {
+  padding: 2rem;
+  border-radius: 12px;
+}
+
+.btn-red {
+  height: 120px;
+  font-family: 'Fredoka', sans-serif;
+  background-color: var(--cor-vermelho);
+  font-size: 36px;
+  letter-spacing: 0.5px;
+  color: var(--cor-branco);
+  border: 3px solid #ff0000;
+}
+
+.btn-red:hover {
+  background-color: #ffffff6d;
+  color: var(--cor-branco);
+}
+
+.btn-azul {
+  height: 120px;
+  font-family: 'Fredoka', sans-serif;
+  background-color: rgb(25, 25, 193);
+  font-size: 36px;
+  letter-spacing: 0.5px;
+  color: var(--cor-branco);
+  border: 3px solid #050f8f;
+}
+
+.btn-azul:hover {
+  background-color: #ffffff6d;
+  color: var(--cor-branco);
+}
+
+.btn-amarelo {
+  height: 120px;
+  font-family: 'Fredoka', sans-serif;
+  background-color: var(--cor-amarelo);
+  font-size: 36px;
+  letter-spacing: 0.5px;
+  color: var(--cor-branco);
+  border: 3px solid #fff200ea;
+}
+
+.btn-amarelo:hover {
+  background-color: #ffffff6d;
+  color: var(--cor-branco);
+}
+
+.btn-verde {
+  height: 120px;
+  font-family: 'Fredoka', sans-serif;
+  background-color: var(--cor-verde);
+  font-size: 36px;
+  letter-spacing: 0.5px;
+  color: var(--cor-branco);
+  border: 3px solid #59ff00c2;
+}
+
+.btn-verde:hover {
+  background-color: #ffffff6d;
+  color: var(--cor-branco);
+}
+
+.btn-pe {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--cor-branco);
+  font-size: 36px;
+  letter-spacing: 0.5px;
+}
+
+.btn-pe:hover {
+  background-color: #25a244;
+  transform: scale(1.2);
+  color: var(--cor-branco);
+}
+
+.text-pe {
+  color: #1a1a1a;
+}
+
+.text-game {
+  font-family: 'Fredoka', sans-serif;
+  color: var(--cor-branco);
+  font-size: 36px;
+  letter-spacing: 0.5px;
+}
+
+.tela {
+  display: none !important;
+}
+
+.tela.ativa {
+  display: flex !important;
+}
+
+/* CSS para integrar o mapa ao seu design */
+#card-selecao {
+  width: 100%;
+  max-width: 900px;
+  height: 800px;
+  background: transparent !important;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  background: transparent !important;
+  outline: none;
+}
+
+/* Remove a borda padrão do Leaflet ao clicar */
+.leaflet-container {
+  background: transparent !important;
+  outline: 0;
+}
+
+@media (max-width: 768px) {
+  .btn-pe {
+    width: 70%;
+    font-size: 18px;
+  }
+
+  #card-selecao {
+    height: 500px;
+  }
+
+  .btn-red {
+    font-size: 24px;
+  }
+
+  .btn-azul {
+    font-size: 24px;
+  }
+
+  .btn-amarelo {
+
+    font-size: 24px;
+  }
+
+  .btn-verde {
+    font-size: 24px;
+  }
+}
+
+.escurecendo {
+    position: fixed;            /* Trava na tela */
+    top: 0; left: 0;            
+    width: 100vw; height: 100vh;
+    background-color: rgba(150, 0, 0, 0); /* 0 significa Totalmente Transparente */
+    z-index: -1;                /* Fica atrás do seu jogo, mas na frente da imagem de fundo */
+    pointer-events: none;       /* Proíbe ela de roubar seus cliques de mouse */
+    transition: background-color 1s ease-in-out; /* O fade mágico de 1 segundo! */
+}
