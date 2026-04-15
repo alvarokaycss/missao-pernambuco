@@ -1,258 +1,159 @@
+import { perguntas } from "./perguntas.js";
+import { carregarMapa } from "./mapa.js";
+import { ui, variaveisGlobais, quiz } from "./objetos.js";
+import { playAudio, playAudioCidade, mostrarTela } from "./utils.js";
 
-function mostrarTela(id) {
-    document.querySelectorAll(".tela").forEach(tela => {
-        tela.classList.remove("ativa");
+function iniciarEventos() {
+    ui.btnIniciar.addEventListener("click", () => {
+        playAudio();
+        iniciarJogo();
     });
 
-    document.getElementById(id).classList.add("ativa");
+    ui.btnIniciarMissao.addEventListener("click", () => {
+        iniciarFaseCidade();
+    });
+
+    ui.btnTentarNovamente.addEventListener("click", () => {
+        tentarNovamente();
+    });
 }
 
-let mapaCarregado = false;
-let cidadeSelecionada = null;
-let layerSelecionada = null;
-let timeoutLuas = []; // Array para guardar os fantasmas
+// Funções do jogo
+function tentarNovamente() {
+    ui.filtroNoite.style.backgroundColor = "rgba(0,0,0,0)";
+    mostrarTela("card-selecao");
+    ui.btnTentarNovamente.classList.add("d-none")
+}
 
+// Funções do Quiz
+function avancarProximaPergunta() {
+        quiz.perguntaAtual++;
+        quiz.tempo = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].tempo;
+        ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
+        ui.barraTempo.innerText = quiz.tempo + "s";
+        ui.pergunta.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].pergunta;
+
+        ui.botoesOpcao.forEach((botao, index) => {
+            botao.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].opcoes[index];
+            botao.onclick = () => {
+                verificarResposta(index);
+            };
+        });
+}
+
+function diminuirVidaInterface() {
+
+    const imagemVida = document.getElementById("vida-" + quiz.vidas);
+    const gifAtualizado = "../assets/img/perdeu-vida.gif?t=" + new Date().getTime();
+    imagemVida.src = gifAtualizado;
+
+    if (quiz.vidas === 4) {
+        // Muda para um vermelho transparente fraquinho
+        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.2)";
+    } else if (quiz.vidas === 3) {
+        // Mais escuro
+        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.4)";
+    } else if (quiz.vidas === 2) {
+        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.6)";
+    } else if (quiz.vidas === 1) {
+        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.85)";
+    }
+
+    // Salvamos esse temporizador para podermos matá-lo se o jogo acabar antes dos 3.9s
+    const timer = setTimeout(() => {
+        imagemVida.src = "../assets/img/lua.png";
+    }, 3900);
+
+    variaveisGlobais.timeoutLuas.push(timer);
+    quiz.vidas--;
+}
+
+// Função Principal do Jogo
 function iniciarJogo() {
 
-    const btn = document.getElementById("btn-iniciar");
-    const barraContainer = document.getElementById("barra-progresso");
-    const barraFill = document.getElementById("progresso-fill");
-
-
-    btn.classList.add("d-none");
-    barraContainer.classList.remove("d-none");
-
+    ui.btnIniciar.classList.add("d-none");
+    ui.barraProgresso.classList.remove("d-none");
 
     let porcentagem = 0;
 
-    // temporizador executando a função a cada 300ms
+    // Executa a função a cada 300ms para simular o carregamento
     const temporizador = setInterval(() => {
         porcentagem += 10;
 
         // Atualiza HTML
-        barraFill.style.width = porcentagem + "%";
-        barraFill.innerText = porcentagem + "%";
+        ui.barraFill.style.width = porcentagem + "%";
+        ui.barraFill.innerText = porcentagem + "%";
 
         // Verifica se carregou completamente
         if (porcentagem >= 100) {
-            clearInterval(temporizador); // Para o nosso temporizador
+            clearInterval(temporizador);
 
-            // Troca de tela após um micro intervalinho (500ms) para ficar suave
+            // Troca de tela após intervalo de 500ms
             setTimeout(() => {
                 mostrarTela("card-selecao");
-                if (!mapaCarregado) {
+                if (!variaveisGlobais.mapaCarregado) {
                     carregarMapa();
-                    mapaCarregado = true;
+                    variaveisGlobais.mapaCarregado = true;
                 }
             }, 500);
         }
     }, 300);
 }
 
-// FUNÇÃO PRONTA DO MAPA
-function carregarMapa() {
-    // 1. Inicializa o mapa centralizado em Pernambuco
-    const map = L.map('map', {
-        zoomControl: false,
-        attributionControl: false, // Remove os créditos para ficar mais limpo
-        dragging: true,
-        scrollWheelZoom: true // Evita zoom acidental ao rolar a página
-    }).setView([-8.41, -37.95], 7);
-
-    // 2. Estilos do Mapa
-    const estiloPadrao = {
-        fillColor: "#ffffff6b", // Cidades Brancas
-        weight: 1.2,            // Espessura da borda
-        opacity: 1,
-        color: "#000000",     // Cor da borda (Preto para destacar o branco)
-        fillOpacity: 0.8      // Opacidade da cor de preenchimento
-
-    };
-
-    const estiloHover = {
-        fillColor: "#1dc44743", // Cor ao passar o mouse (ex: Verde Limão)
-        fillOpacity: 1,
-        weight: 3.5
-    };
-
-    // Carregar os dados geográficos (GeoJSON)
-    fetch('https://raw.githubusercontent.com/tbrugz/geodata-br/master/geojson/geojs-26-mun.json')
-        .then(response => response.json())
-        .then(data => {
-            L.geoJSON(data, {
-                style: estiloPadrao,
-                onEachFeature: function (feature, layer) {
-                    // Eventos de cada cidade
-                    layer.on({
-                        mouseover: (e) => {
-                            // Só fica verde no hover SE não for a cidade clicada
-                            if (e.target !== layerSelecionada) {
-                                e.target.setStyle(estiloHover);
-                            }
-                        },
-                        mouseout: (e) => {
-                            // Só volta ao normal SE não for a cidade clicada
-                            if (e.target !== layerSelecionada) {
-                                e.target.setStyle(estiloPadrao);
-                            }
-                        },
-                        click: (e) => {
-                            // Se já tinha alguma cidade selecionada, voltamos a cor dela pro inicial
-                            if (layerSelecionada) {
-                                layerSelecionada.setStyle(estiloPadrao);
-                            }
-
-                            // O nosso alvo atual vira o novo selecionado
-                            cidadeSelecionada = feature.properties.name;
-                            layerSelecionada = e.target;
-
-                            // Deixamos a cidade clicada amarela/destacada
-                            layerSelecionada.setStyle({
-                                fillColor: "#1dc447", // Amarelo
-                                fillOpacity: 1,
-                                weight: 3.5
-                            });
-
-                            // Mostramos o botão na tela
-                            const btnMissao = document.getElementById("btn-iniciar-missao");
-                            btnMissao.innerText = "Iniciar Missão: " + cidadeSelecionada;
-                            btnMissao.classList.remove("d-none");
-                        }
-                    });
-
-                    // Mostrar nome ao passar o mouse
-                    layer.bindTooltip(feature.properties.name, { sticky: true });
-                }
-            }).addTo(map);
-        });
-}
-
 function iniciarFaseCidade() {
-    if (!cidadeSelecionada) return;
+    if (!variaveisGlobais.cidadeSelecionada) return;
 
-    const cidadesDisponiveis = ["Recife", "Olinda", "Caruaru", "Garanhuns", "Petrolina"]
-
-    if (!cidadesDisponiveis.includes(cidadeSelecionada)) {
+    if (!variaveisGlobais.cidadesDisponiveis.includes(variaveisGlobais.cidadeSelecionada)) {
         alert("Cidade ainda não disponível");
         return;
     }
 
     mostrarTela("card-quiz");
-    iniciarQuiz(cidadeSelecionada);
+    iniciarQuiz();
 }
 
-function iniciarQuiz(cidade) {
-    const cidadesPersonalizadas = ["Recife", "Olinda", "Caruaru"]
+function iniciarQuiz() {
 
-    if (cidadesPersonalizadas.includes(cidade)) {
-        playAudioCidade(cidade);
+    quiz.perguntaAtual = 0;
+    quiz.vidas = 5;
+    quiz.tempo = perguntas[variaveisGlobais.cidadeSelecionada][0].tempo;
+    quiz.tempoMaximo = perguntas[variaveisGlobais.cidadeSelecionada][0].tempo;
+
+    if (variaveisGlobais.cidadesPersonalizadas.includes(variaveisGlobais.cidadeSelecionada)) {
+        playAudioCidade(variaveisGlobais.cidadeSelecionada);
     }
 
-    let perguntaAtual = 0;
-    let vidas = 5;
-    let tempo = perguntas[cidade][perguntaAtual].tempo;
-    let tempoMaximo = tempo;
+    ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
+    ui.barraTempo.innerText = quiz.tempo + "s";
+    ui.pergunta.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].pergunta;
 
-    const barraTempo = document.getElementById("barra-tempo-fill");
-    barraTempo.style.width = (tempo / tempoMaximo) * 100 + "%";
-    barraTempo.innerText = tempo + "s";
-
-    const pergunta = document.getElementById("pergunta");
-    pergunta.innerText = perguntas[cidade][perguntaAtual].pergunta;
-
-    const botoesOpcao = document.querySelectorAll(".opcao");
-
-    function verificarResposta(resposta) {
-        if (resposta === perguntas[cidade][perguntaAtual].correta) {
-
-            // Condição de vitória
-            if (perguntaAtual === perguntas[cidade].length - 1) {
-                // EXPURGANDO OS TIMEOUTS NA VITÓRIA
-                timeoutLuas.forEach(clearTimeout);
-                timeoutLuas = [];
-
-                alert("Parabéns! Você completou a missão!");
-
-                // Reinicia para a próxima vez que for jogar
-                mostrarTela("card-selecao");
-                document.getElementById("body").className = "bg-pe";
-                for (let i = 1; i <= 5; i++) {
-                    const imagemVida = document.getElementById("vida-" + i);
-                    imagemVida.src = "../assets/img/sol.png";
-                }
-
-                return;
-            }
-
-            perguntaAtual++;
-            tempo = perguntas[cidade][perguntaAtual].tempo;
-            barraTempo.style.width = (tempo / tempoMaximo) * 100 + "%";
-            barraTempo.innerText = tempo + "s";
-            pergunta.innerText = perguntas[cidade][perguntaAtual].pergunta;
-
-            botoesOpcao.forEach((botao, index) => {
-                botao.innerText = perguntas[cidade][perguntaAtual].opcoes[index];
-                botao.onclick = () => {
-                    verificarResposta(index);
-                };
-            });
-        } else {
-            diminuirVidaInterface(vidas);
-            vidas--;
-            perguntaAtual++;
-            tempo = perguntas[cidade][perguntaAtual].tempo;
-            barraTempo.style.width = (tempo / tempoMaximo) * 100 + "%";
-            barraTempo.innerText = tempo + "s";
-            pergunta.innerText = perguntas[cidade][perguntaAtual].pergunta;
-
-            botoesOpcao.forEach((botao, index) => {
-                botao.innerText = perguntas[cidade][perguntaAtual].opcoes[index];
-                botao.onclick = () => {
-                    verificarResposta(index);
-                };
-            });
-        }
-    }
-
-    botoesOpcao.forEach((botao, index) => {
-        botao.innerText = perguntas[cidade][perguntaAtual].opcoes[index];
+    ui.botoesOpcao.forEach((botao, index) => {
+        botao.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].opcoes[index];
         botao.onclick = () => {
-            verificarResposta(index, botoesOpcao);
+            verificarResposta(index);
         };
     });
 
     // temporizador de tempo e vida
     const temporizador = setInterval(() => {
-        tempo--;
-        barraTempo.style.width = (tempo / tempoMaximo) * 100 + "%";
-        barraTempo.innerText = tempo + "s";
+        quiz.tempo--;
+        ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
+        ui.barraTempo.innerText = quiz.tempo + "s";
 
-        if (tempo <= 0) {
-            diminuirVidaInterface(vidas);
-            vidas--;
-            perguntaAtual++;
-            tempo = perguntas[cidade][perguntaAtual].tempo;
-            barraTempo.style.width = (tempo / tempoMaximo) * 100 + "%";
-            barraTempo.innerText = tempo + "s";
-            pergunta.innerText = perguntas[cidade][perguntaAtual].pergunta;
-
-            botoesOpcao.forEach((botao, index) => {
-                botao.innerText = perguntas[cidade][perguntaAtual].opcoes[index];
-                botao.onclick = () => {
-                    verificarResposta(index, botoesOpcao);
-                };
-            });
+        if (quiz.tempo <= 0) {
+            diminuirVidaInterface();
+            avancarProximaPergunta();
         }
 
         // Condição de DERROTA
-        if (vidas <= 0) {
+        if (acabouOjogo()) {
             clearInterval(temporizador);
-            perguntaAtual = 0;
-            vidas = 5;
+            quiz.perguntaAtual = 0;
+            quiz.vidas = 5;
 
             // EXPURGANDO OS TIMEOUTS NO GAME OVER
-            timeoutLuas.forEach(clearTimeout);
-            timeoutLuas = [];
+            variaveisGlobais.timeoutLuas.forEach(clearTimeout);
+            variaveisGlobais.timeoutLuas = [];
 
             mostrarTela("card-perdeu");
 
@@ -273,36 +174,38 @@ function iniciarQuiz(cidade) {
     }, 1000);
 }
 
-function tentarNovamente() {
-    document.getElementById("noite").style.backgroundColor = "rgba(0,0,0,0)";
-    mostrarTela("card-selecao");
-    document.getElementById("btn-tentar-novamente").classList.add("d-none")
+function acabouOjogo() {
+    return quiz.vidas <= 0;
 }
 
-function diminuirVidaInterface(vidas) {
+function verificarResposta(resposta) {
+    if (resposta === perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].correta) {
 
-    const imagemVida = document.getElementById("vida-" + vidas);
-    const modoNoite = document.getElementById("noite");
+        // Condição de vitória
+        if (quiz.perguntaAtual === perguntas[variaveisGlobais.cidadeSelecionada].length - 1) {
+            // EXPURGANDO OS TIMEOUTS NA VITÓRIA
+            variaveisGlobais.timeoutLuas.forEach(clearTimeout);
+            variaveisGlobais.timeoutLuas = [];
 
-    const gifAtualizado = "../assets/img/perdeu-vida.gif?t=" + new Date().getTime();
-    imagemVida.src = gifAtualizado;
+            alert("Parabéns! Você completou a missão!");
 
-    if (vidas === 4) {
-        // Muda para um vermelho transparente fraquinho
-        modoNoite.style.backgroundColor = "rgba(18, 10, 63, 0.2)";
-    } else if (vidas === 3) {
-        // Mais escuro
-        modoNoite.style.backgroundColor = "rgba(18, 10, 63, 0.4)";
-    } else if (vidas === 2) {
-        modoNoite.style.backgroundColor = "rgba(18, 10, 63, 0.6)";
-    } else if (vidas === 1) {
-        modoNoite.style.backgroundColor = "rgba(18, 10, 63, 0.85)";
+            // Reinicia para a próxima vez que for jogar
+            mostrarTela("card-selecao");
+            document.getElementById("body").className = "bg-pe";
+            for (let i = 1; i <= 5; i++) {
+                const imagemVida = document.getElementById("vida-" + i);
+                imagemVida.src = "../assets/img/sol.png";
+            }
+
+            return;
+        }
+        avancarProximaPergunta();
+
+    } else {
+        diminuirVidaInterface();
+        avancarProximaPergunta();
     }
-
-    // Salvamos esse temporizador para podermos matá-lo se o jogo acabar antes dos 3.9s
-    const timer = setTimeout(() => {
-        imagemVida.src = "../assets/img/lua.png";
-    }, 3900);
-
-    timeoutLuas.push(timer);
 }
+
+// INICIA OS EVENTOS DO QUIZ
+iniciarEventos();

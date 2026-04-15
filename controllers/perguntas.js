@@ -1,4 +1,4 @@
-const perguntas = {
+export const perguntas = {
   "Garanhuns": [
     { "id": 1, "pergunta": "Qual evento cultural de destaque ocorre anualmente em Garanhuns no mês de julho?", "opcoes": ["Festival de Inverno", "Garanhuns Jazz Festival", "Magia do Natal", "Festa do Leite"], "correta": 0, "tempo": 15 },
     { "id": 2, "pergunta": "Garanhuns é conhecida como a 'Suíça Pernambucana' devido a qual característica?", "opcoes": ["Arquitetura europeia", "Produção de chocolate", "Clima ameno e altitude", "Sistema bancário"], "correta": 2, "tempo": 10 },
