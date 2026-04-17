@@ -42,7 +42,6 @@
 
 .btn-red {
   height: 120px;
-  font-family: 'Fredoka', sans-serif;
   background-color: var(--cor-vermelho);
   font-size: 36px;
   letter-spacing: 0.5px;
@@ -57,7 +56,6 @@
 
 .btn-azul {
   height: 120px;
-  font-family: 'Fredoka', sans-serif;
   background-color: rgb(25, 25, 193);
   font-size: 36px;
   letter-spacing: 0.5px;
@@ -72,7 +70,6 @@
 
 .btn-amarelo {
   height: 120px;
-  font-family: 'Fredoka', sans-serif;
   background-color: var(--cor-amarelo);
   font-size: 36px;
   letter-spacing: 0.5px;
@@ -87,7 +84,6 @@
 
 .btn-verde {
   height: 120px;
-  font-family: "Schoolbell", cursive;
   background-color: var(--cor-verde);
   font-size: 36px;
   letter-spacing: 0.5px;
@@ -101,7 +97,6 @@
 }
 
 .btn-pe {
-  font-family: 'Fredoka', sans-serif;
   color: var(--cor-branco);
   font-size: 36px;
   background-color: #e8944b;
@@ -119,7 +114,6 @@
 }
 
 .text-game {
-  font-family: 'Fredoka', sans-serif;
   color: var(--cor-branco);
   font-size: 36px;
   letter-spacing: 0.5px;
