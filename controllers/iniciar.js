@@ -1,12 +1,14 @@
 import { perguntas } from "./perguntas.js";
 import { carregarMapa } from "./mapa.js";
-import { ui, variaveisGlobais, quiz } from "./objetos.js";
-import { playAudio, playAudioCidade, mostrarTela } from "./utils.js";
+import { ui, variaveisGlobais, quiz, imagens } from "./objetos.js";
+import { playAudio, playAudioCidade, mostrarTela, playAudioFeedback, playAudioFim } from "./utils.js";
+import { jogarConfettiInfinito, pararConfettiInfinito } from "./confetes.js";
+import { chuvaErro } from "./chuva.js";
 
 function iniciarEventos() {
     ui.btnIniciar.addEventListener("click", () => {
         playAudio();
-        iniciarJogo();
+        iniciarJogoSelecao();
     });
 
     ui.btnIniciarMissao.addEventListener("click", () => {
@@ -14,21 +16,60 @@ function iniciarEventos() {
     });
 
     ui.btnTentarNovamente.addEventListener("click", () => {
+        playAudio();
         tentarNovamente();
+    });
+
+    ui.btnJogarNovamente.addEventListener("click", () => {
+        playAudio();
+        jogarNovamente();
     });
 }
 
-// Funções do jogo
+
+// Tela de Derrota
 function tentarNovamente() {
     ui.filtroNoite.style.backgroundColor = "rgba(0,0,0,0)";
     mostrarTela("card-selecao");
     ui.btnTentarNovamente.classList.add("d-none")
 }
+// ************************************************************
 
-// Funções do Quiz
+// Tela de Vitória
+function jogarNovamente() {
+    ui.filtroNoite.style.backgroundColor = "rgba(0,0,0,0)";
+    pararConfettiInfinito(quiz.intervaloConfetti);
+    mostrarTela("card-selecao");
+    ui.btnJogarNovamente.classList.add("d-none")
+}
+// ************************************************************
+
+// Funções de verificação (Legibilidade)
+function acabouAsVidas() {
+    return quiz.vidas <= 0;
+}
+
+
+function acabouTempo() {
+    return quiz.tempo <= 0 && quiz.vidas > 0;
+}
+
+
+function ultimaPergunta(){
+    return quiz.perguntaAtual === perguntas[variaveisGlobais.cidadeSelecionada].length - 1;
+}
+
+
+function respostaCorreta(resposta){
+    return resposta === perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].correta;
+}
+// ************************************************************
+
+// Funções de lógica (Repetição)
 function avancarProximaPergunta() {
         quiz.perguntaAtual++;
         quiz.tempo = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].tempo;
+        ui.perguntaFeedback.innerText = `Perguntas: ${quiz.perguntaAtual + 1}/${perguntas[variaveisGlobais.cidadeSelecionada].length}`;
         ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
         ui.barraTempo.innerText = quiz.tempo + "s";
         ui.pergunta.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].pergunta;
@@ -36,59 +77,168 @@ function avancarProximaPergunta() {
         ui.botoesOpcao.forEach((botao, index) => {
             botao.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].opcoes[index];
             botao.onclick = () => {
-                verificarResposta(index);
+                mostrarAlternativa(verificarResposta(index));
             };
         });
 }
 
+
 function diminuirVidaInterface() {
 
     const imagemVida = document.getElementById("vida-" + quiz.vidas);
-    const gifAtualizado = "../assets/img/perdeu-vida.gif?t=" + new Date().getTime();
+    const gifAtualizado = imagens.perdeuVidaGif + "?t=" + new Date().getTime();
     imagemVida.src = gifAtualizado;
 
-    if (quiz.vidas === 4) {
-        // Muda para um vermelho transparente fraquinho
-        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.2)";
-    } else if (quiz.vidas === 3) {
-        // Mais escuro
-        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.4)";
-    } else if (quiz.vidas === 2) {
-        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.6)";
-    } else if (quiz.vidas === 1) {
-        ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.85)";
-    }
+    quiz.vidas--;
 
-    // Salvamos esse temporizador para podermos matá-lo se o jogo acabar antes dos 3.9s
+    if (quiz.vidas === 4) ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.2)";
+    if (quiz.vidas === 3) ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.4)";
+    if (quiz.vidas === 2) ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.6)";
+    if (quiz.vidas === 1) ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.75)";
+    if (quiz.vidas === 0) ui.filtroNoite.style.backgroundColor = "rgba(18, 10, 63, 0.85)";
+
     const timer = setTimeout(() => {
-        imagemVida.src = "../assets/img/lua.png";
+        imagemVida.src = imagens.lua;
     }, 3900);
 
     variaveisGlobais.timeoutLuas.push(timer);
-    quiz.vidas--;
 }
 
-// Função Principal do Jogo
-function iniciarJogo() {
+
+function resetarJogo(){
+    // Reseta o jogo
+    clearInterval(quiz.temporizador);
+    quiz.perguntaAtual = 0;
+    quiz.vidas = 5;
+
+    // Reseta timeouts da lua
+    variaveisGlobais.timeoutLuas.forEach(clearTimeout);
+    variaveisGlobais.timeoutLuas = [];
+
+    // Reseta as vidas na interface
+    for (let i = 1; i <= 5; i++) {
+        const imagemVida = document.getElementById("vida-" + i);
+        imagemVida.src = imagens.solGif;
+    }
+}
+
+
+// Feedback para o usuário das alternativas visual e sonoro
+function mostrarAlternativa(acertou) {
+
+    if (acertou === null) return;
+
+    const img = acertou ? imagens.acertouGif : imagens.errouGif;
+    ui.feedbackQuiz.src = img;
+    ui.feedbackQuiz.classList.remove("d-none");
+    playAudioFeedback(acertou);
+    setTimeout(() => {
+        ui.feedbackQuiz.classList.add("d-none");
+    }, 800);
+}
+// ************************************************************
+
+// Lógica de verificação de resposta com condições de vitória/derrota
+function verificarResposta(resposta) {
+    if (respostaCorreta(resposta)) {
+        if (ultimaPergunta()) {
+            resetarJogo();
+            quiz.intervaloConfetti = jogarConfettiInfinito();
+            mostrarTela("card-vitoria");
+            playAudioFim(1);
+            setTimeout(() => {
+                ui.btnJogarNovamente.classList.remove("d-none");
+            }, 3000);
+            return 1;
+        } else {
+            avancarProximaPergunta();
+            return 1;
+        }
+    } else {
+        diminuirVidaInterface();
+
+        if (acabouAsVidas()) {
+            resetarJogo();
+            mostrarTela("card-perdeu");
+            playAudioFim(0);
+            ui.imgTelaPerdeu.src = imagens.missaoFalhouGif + "?t=" + new Date().getTime();
+            chuvaErro(40);
+            setTimeout(() => {
+                ui.imgTelaPerdeu.src = imagens.missaoFalhouImg;
+                ui.btnTentarNovamente.classList.remove("d-none");
+            }, 6000);
+            return 0;
+        } else if (ultimaPergunta()) {
+            resetarJogo();
+            quiz.intervaloConfetti = jogarConfettiInfinito();
+            playAudioFim(1);
+            mostrarTela("card-vitoria");
+            setTimeout(() => {
+                ui.btnJogarNovamente.classList.remove("d-none");
+            }, 3000);
+            return 0;
+        } else {
+            avancarProximaPergunta();
+            return 0;
+        }
+    }
+}
+// ************************************************************
+
+// Lógica do Temporizador com condições de vitória/derrota
+function temporizador() {
+        quiz.temporizador = setInterval(() => {
+        quiz.tempo--;
+        ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
+        ui.barraTempo.innerText = quiz.tempo + "s";
+
+        if (acabouTempo()) {
+            mostrarAlternativa(0);
+            diminuirVidaInterface();
+
+            if (acabouAsVidas()) {
+                resetarJogo();
+                playAudioFim(0);
+                mostrarTela("card-perdeu");
+                ui.imgTelaPerdeu.src = imagens.missaoFalhouGif + "?t=" + new Date().getTime();
+                chuvaErro(40);
+                setTimeout(() => {
+                    ui.imgTelaPerdeu.src = imagens.missaoFalhouImg;
+                    ui.btnTentarNovamente.classList.remove("d-none");
+                }, 6000);
+            } else if (ultimaPergunta()) {
+                resetarJogo();
+                quiz.intervaloConfetti = jogarConfettiInfinito();
+                playAudioFim(1);
+                mostrarTela("card-vitoria");
+                setTimeout(() => {
+                    ui.btnJogarNovamente.classList.remove("d-none");
+                }, 3000);
+            } else {
+                avancarProximaPergunta();
+            }
+        }
+    }, 1000);
+}
+// ************************************************************
+
+// Inicia a Fase de Seleção de Missão e Carrega o Mapa
+function iniciarJogoSelecao() {
 
     ui.btnIniciar.classList.add("d-none");
     ui.barraProgresso.classList.remove("d-none");
 
     let porcentagem = 0;
 
-    // Executa a função a cada 300ms para simular o carregamento
     const temporizador = setInterval(() => {
         porcentagem += 10;
 
-        // Atualiza HTML
         ui.barraFill.style.width = porcentagem + "%";
         ui.barraFill.innerText = porcentagem + "%";
 
-        // Verifica se carregou completamente
         if (porcentagem >= 100) {
             clearInterval(temporizador);
 
-            // Troca de tela após intervalo de 500ms
             setTimeout(() => {
                 mostrarTela("card-selecao");
                 if (!variaveisGlobais.mapaCarregado) {
@@ -99,10 +249,13 @@ function iniciarJogo() {
         }
     }, 300);
 }
+// ************************************************************
 
+// Inicia a Fase Selecionada
 function iniciarFaseCidade() {
     if (!variaveisGlobais.cidadeSelecionada) return;
 
+    // Nunca executará por que modifiquei no mapa.js pra deixar clicável apenas as cidades disponíveis
     if (!variaveisGlobais.cidadesDisponiveis.includes(variaveisGlobais.cidadeSelecionada)) {
         alert("Cidade ainda não disponível");
         return;
@@ -111,7 +264,9 @@ function iniciarFaseCidade() {
     mostrarTela("card-quiz");
     iniciarQuiz();
 }
+// ************************************************************
 
+// Função principal que de fato inicia o Jogo 
 function iniciarQuiz() {
 
     quiz.perguntaAtual = 0;
@@ -123,6 +278,7 @@ function iniciarQuiz() {
         playAudioCidade(variaveisGlobais.cidadeSelecionada);
     }
 
+    ui.perguntaFeedback.innerText = `Pergunta: ${quiz.perguntaAtual + 1}/${perguntas[variaveisGlobais.cidadeSelecionada].length}`;
     ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
     ui.barraTempo.innerText = quiz.tempo + "s";
     ui.pergunta.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].pergunta;
@@ -130,82 +286,17 @@ function iniciarQuiz() {
     ui.botoesOpcao.forEach((botao, index) => {
         botao.innerText = perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].opcoes[index];
         botao.onclick = () => {
-            verificarResposta(index);
+            mostrarAlternativa(verificarResposta(index));
         };
     });
 
-    // temporizador de tempo e vida
-    const temporizador = setInterval(() => {
-        quiz.tempo--;
-        ui.barraTempo.style.width = (quiz.tempo / quiz.tempoMaximo) * 100 + "%";
-        ui.barraTempo.innerText = quiz.tempo + "s";
-
-        if (quiz.tempo <= 0) {
-            diminuirVidaInterface();
-            avancarProximaPergunta();
-        }
-
-        // Condição de DERROTA
-        if (acabouOjogo()) {
-            clearInterval(temporizador);
-            quiz.perguntaAtual = 0;
-            quiz.vidas = 5;
-
-            // EXPURGANDO OS TIMEOUTS NO GAME OVER
-            variaveisGlobais.timeoutLuas.forEach(clearTimeout);
-            variaveisGlobais.timeoutLuas = [];
-
-            mostrarTela("card-perdeu");
-
-            document.getElementById("img-perdeu").src = "../assets/img/missão-falhou.gif?t=" + new Date().getTime();
-            setTimeout(() => {
-                document.getElementById("img-perdeu").src = "../assets/img/missão-falhou-img.png"
-                document.getElementById("btn-tentar-novamente").classList.remove("d-none");
-            }, 6000);
-
-            for (let i = 1; i <= 5; i++) {
-                const imagemVida = document.getElementById("vida-" + i);
-                imagemVida.src = "../assets/img/sol.png";
-            }
-
-        }
-
-
-    }, 1000);
+    // Starta o temporizador do QUIZ
+    temporizador();
 }
+// ************************************************************
 
-function acabouOjogo() {
-    return quiz.vidas <= 0;
-}
+// ===========================
+// Inicia os eventos do QUIZ
+// ===========================
 
-function verificarResposta(resposta) {
-    if (resposta === perguntas[variaveisGlobais.cidadeSelecionada][quiz.perguntaAtual].correta) {
-
-        // Condição de vitória
-        if (quiz.perguntaAtual === perguntas[variaveisGlobais.cidadeSelecionada].length - 1) {
-            // EXPURGANDO OS TIMEOUTS NA VITÓRIA
-            variaveisGlobais.timeoutLuas.forEach(clearTimeout);
-            variaveisGlobais.timeoutLuas = [];
-
-            alert("Parabéns! Você completou a missão!");
-
-            // Reinicia para a próxima vez que for jogar
-            mostrarTela("card-selecao");
-            document.getElementById("body").className = "bg-pe";
-            for (let i = 1; i <= 5; i++) {
-                const imagemVida = document.getElementById("vida-" + i);
-                imagemVida.src = "../assets/img/sol.png";
-            }
-
-            return;
-        }
-        avancarProximaPergunta();
-
-    } else {
-        diminuirVidaInterface();
-        avancarProximaPergunta();
-    }
-}
-
-// INICIA OS EVENTOS DO QUIZ
 iniciarEventos();

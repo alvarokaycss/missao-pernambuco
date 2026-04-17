@@ -4,6 +4,11 @@
   --cor-verde: #1dc447;
   --cor-vermelho: #D62828;
   --cor-branco: #FFFFFF;
+  --font-game: "Mansalva", sans-serif;
+}
+
+* {
+  font-family: var(--font-game) !important;
 }
 
 #missao-gif {
@@ -27,26 +32,6 @@
 
 .bg-pe {
   background: url('../img/bg_pernambuco.png') no-repeat center center fixed;
-  background-size: cover;
-}
-
-.bg-perdeu-2 {
-  background: url('../img/bg-perdeu-2.png') no-repeat center center fixed;
-  background-size: cover;
-}
-
-.bg-perdeu-3 {
-  background: url('../img/bg-perdeu-3.png') no-repeat center center fixed;
-  background-size: cover;
-}
-
-.bg-perdeu-4 {
-  background: url('../img/bg-perdeu-4.png') no-repeat center center fixed;
-  background-size: cover;
-}
-
-.bg-perdeu-5 {
-  background: url('../img/bg-perdeu-5.png') no-repeat center center fixed;
   background-size: cover;
 }
 
@@ -102,7 +87,7 @@
 
 .btn-verde {
   height: 120px;
-  font-family: 'Fredoka', sans-serif;
+  font-family: "Schoolbell", cursive;
   background-color: var(--cor-verde);
   font-size: 36px;
   letter-spacing: 0.5px;
@@ -119,12 +104,13 @@
   font-family: 'Fredoka', sans-serif;
   color: var(--cor-branco);
   font-size: 36px;
+  background-color: #e8944b;
   letter-spacing: 0.5px;
 }
 
 .btn-pe:hover {
-  background-color: #25a244;
-  transform: scale(1.2);
+  
+  transform: scale(0.8);
   color: var(--cor-branco);
 }
 
@@ -162,7 +148,6 @@
   outline: none;
 }
 
-/* Remove a borda padrão do Leaflet ao clicar */
 .leaflet-container {
   background: transparent !important;
   outline: 0;
@@ -197,11 +182,34 @@
 }
 
 .escurecendo {
-    position: fixed;            /* Trava na tela */
+    position: fixed;
     top: 0; left: 0;            
     width: 100vw; height: 100vh;
-    background-color: rgba(150, 0, 0, 0); /* 0 significa Totalmente Transparente */
-    z-index: -1;                /* Fica atrás do seu jogo, mas na frente da imagem de fundo */
-    pointer-events: none;       /* Proíbe ela de roubar seus cliques de mouse */
-    transition: background-color 1s ease-in-out; /* O fade mágico de 1 segundo! */
+    background-color: rgba(150, 0, 0, 0);
+    z-index: -1;
+    pointer-events: none;
+    transition: background-color 1s ease-in-out;
+}
+
+.alternativa {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .alternativa {
+    top: 20%;
+    left: 20%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: none;
+  }
+}
+
+.m-negativo {
+  margin-left: -25px;
 }
