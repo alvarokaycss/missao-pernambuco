@@ -37,7 +37,7 @@ export const variaveisGlobais = {
     layerSelecionada: null,
     timeoutLuas: [],
     cidadesPersonalizadas: ["Recife", "Olinda", "Caruaru"],
-    cidadesDisponiveis: ["Recife", "Olinda", "Caruaru", "Garanhuns", "Petrolina"],
+    cidadesDisponiveis: ["Recife", "Olinda", "Caruaru", "Garanhuns", "Petrolina", "Ipojuca", "Serra Talhada", "Gravatá"],
 }
 
 
