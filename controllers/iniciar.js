@@ -32,6 +32,11 @@ function tentarNovamente() {
     ui.filtroNoite.style.backgroundColor = "rgba(0,0,0,0)";
     mostrarTela("card-selecao");
     ui.btnTentarNovamente.classList.add("d-none")
+
+    // Atualiza o mapa quando a tela de seleção volta a ser visível
+    if (variaveisGlobais.mapaInstancia) {
+        setTimeout(() => variaveisGlobais.mapaInstancia.invalidateSize(), 100);
+    }
 }
 // ************************************************************
 
@@ -41,6 +46,11 @@ function jogarNovamente() {
     pararConfettiInfinito(quiz.intervaloConfetti);
     mostrarTela("card-selecao");
     ui.btnJogarNovamente.classList.add("d-none")
+
+    // Atualiza o mapa quando a tela de seleção volta a ser visível
+    if (variaveisGlobais.mapaInstancia) {
+        setTimeout(() => variaveisGlobais.mapaInstancia.invalidateSize(), 100);
+    }
 }
 // ************************************************************
 
@@ -244,6 +254,8 @@ function iniciarJogoSelecao() {
                 if (!variaveisGlobais.mapaCarregado) {
                     carregarMapa();
                     variaveisGlobais.mapaCarregado = true;
+                } else if (variaveisGlobais.mapaInstancia) {
+                    variaveisGlobais.mapaInstancia.invalidateSize();
                 }
             }, 500);
         }

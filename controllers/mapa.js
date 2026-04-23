@@ -9,6 +9,9 @@ export function carregarMapa() {
         scrollWheelZoom: true
     }).setView([-8.41, -37.95], 7);
 
+    // Armazena a instância do mapa para poder chamar invalidateSize depois
+    variaveisGlobais.mapaInstancia = map;
+
     const estiloPadrao = {
         fillColor: "#ffffff6b",
         weight: 1.5,
